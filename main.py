@@ -2,6 +2,9 @@ from fastapi import FastAPI
 import joblib
 import pandas as pd
 import numpy as np
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
 app = FastAPI()
 
@@ -29,3 +32,9 @@ def predict(data: dict):
 
     except Exception as e:
         return {"error": str(e)}
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request}
