@@ -738,6 +738,24 @@ window.onload = function () {
     const resultText = document.getElementById('result-text');
     const resultPrice = document.getElementById('result-price');
 
+    // 🔥 TOGGLES
+    const advancedBtn = document.getElementById('toggle-advanced');
+    const advancedSection = document.getElementById('advanced-section');
+
+    const extensiveBtn = document.getElementById('toggle-extensive');
+    const extensiveContainer = document.getElementById('extensive-container');
+
+    advancedBtn.addEventListener('click', () => {
+        advancedSection.classList.toggle('visible');
+        advancedBtn.classList.toggle('active');
+    });
+
+    extensiveBtn.addEventListener('click', () => {
+        extensiveContainer.classList.toggle('visible');
+        extensiveBtn.classList.toggle('active');
+    });
+
+    // 🔥 PREDICT
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -786,6 +804,7 @@ window.onload = function () {
     });
 
 };
+
 </script>
 </body>
 </html>
