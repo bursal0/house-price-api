@@ -729,134 +729,56 @@
     </div>
 
     <script>
-        const form = document.getElementById('prediction-form');
-        const advancedSection = document.getElementById('advanced-section');
-        const extensiveSection = document.getElementById('extensive-container');
-        const toggleAdvancedBtn = document.getElementById('toggle-advanced');
-        const toggleExtensiveBtn = document.getElementById('toggle-extensive');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        const predictBtn = document.getElementById('predict-btn');
-        const resultContainer = document.getElementById('result-container');
-        const resultText = document.getElementById('result-text');
-        const resultPrice = document.getElementById('result-price');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const errorMsg = document.getElementById('error-msg');
+    predictBtn.disabled = true;
+    loadingOverlay.style.display = 'flex';
+    errorMsg.style.display = 'none';
 
-        // Initial result display state
-        resultContainer.style.display = 'flex';
+    const payload = {};
 
-        // Toggle advanced options
-        toggleAdvancedBtn.addEventListener('click', () => {
-            const isVisible = advancedSection.classList.toggle('visible');
-            toggleAdvancedBtn.classList.toggle('active', isVisible);
+    const formData = new FormData(form);
+
+    formData.forEach((value, key) => {
+        if (value !== "") {
+            payload[key] = isNaN(value) ? value : Number(value);
+        }
+    });
+
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
         });
 
-        // Toggle extensive options
-        toggleExtensiveBtn.addEventListener('click', () => {
-            const isVisible = extensiveSection.classList.toggle('visible');
-            toggleExtensiveBtn.classList.toggle('active', isVisible);
-            toggleExtensiveBtn.textContent = isVisible ? 'Hide All Features' : 'Show All Features';
+        const result = await response.json();
 
-            // Scroll to extensive if showing for UX
-            if (isVisible) {
-                setTimeout(() => {
-                    extensiveSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-            }
+        if (result.error) {
+            throw new Error(result.error);
+        }
+
+        resultText.textContent = 'Market Estimate';
+
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
         });
 
-        // Form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        resultPrice.textContent = formatter.format(result.predicted_price);
 
-            // Set loading state
-            predictBtn.disabled = true;
-            loadingOverlay.style.display = 'flex';
-            errorMsg.style.display = 'none';
-
-            // Collect data from the main form AND the extensive section
-            const payload = {};
-
-            // 1. Get elements from form
-            const formData = new FormData(form);
-            formData.forEach((value, key) => {
-                if (value.trim() !== "") {
-                    // Neighborhood and categorical strings
-                    const categorical = [
-                        'Neighborhood', 'BsmtQual', 'BsmtCond', 'MSZoning', 'BldgType',
-                        'HouseStyle', 'KitchenQual', 'Heating', 'HeatingQC', 'CentralAir',
-                        'Electrical', 'Foundation', 'RoofStyle', 'ExterQual', 'PavedDrive',
-                        'BsmtExposure', 'BsmtFinType1', 'SaleType', 'SaleCondition'
-                    ];
-                    if (!categorical.includes(key) && !isNaN(value)) {
-                        payload[key] = Number(value);
-                    } else {
-                        payload[key] = value;
-                    }
-                }
-            });
-
-            // 2. Get elements from Extensive section (which are outside the <form>)
-            const extensiveInputs = extensiveSection.querySelectorAll('input, select');
-            extensiveInputs.forEach(input => {
-                const key = input.name;
-                const value = input.value;
-                if (value && value.trim() !== "") {
-                    const categorical = [
-                        'Neighborhood', 'BsmtQual', 'BsmtCond', 'MSZoning', 'BldgType',
-                        'HouseStyle', 'KitchenQual', 'Heating', 'HeatingQC', 'CentralAir',
-                        'Electrical', 'Foundation', 'RoofStyle', 'ExterQual', 'PavedDrive',
-                        'BsmtExposure', 'BsmtFinType1', 'SaleType', 'SaleCondition'
-                    ];
-                    if (!categorical.includes(key) && !isNaN(value)) {
-                        payload[key] = Number(value);
-                    } else {
-                        payload[key] = value;
-                    }
-                }
-            });
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-
-                // Show result
-                resultText.textContent = 'Market Estimate';
-
-                // Format price as currency
-                const formatter = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                });
-                resultPrice.textContent = formatter.format(result.predicted_price || 0);
-
-                // Scroll to result on desktop if it's far
-                if (window.innerWidth > 900) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-
-            } catch (error) {
-                console.error('Prediction failed:', error);
-                errorMsg.style.display = 'block';
-                resultText.textContent = 'Connection Error';
-                resultPrice.textContent = '$0.00';
-            } finally {
-                predictBtn.disabled = false;
-                loadingOverlay.style.display = 'none';
-            }
-        });
-    </script>
+    } catch (error) {
+        console.error(error);
+        errorMsg.style.display = 'block';
+        resultText.textContent = 'Error';
+        resultPrice.textContent = '$0.00';
+    } finally {
+        predictBtn.disabled = false;
+        loadingOverlay.style.display = 'none';
+    }
+});
+</script>
 </body>
 </html>
 
