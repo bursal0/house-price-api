@@ -729,55 +729,63 @@
     </div>
 
     <script>
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+window.onload = function () {
 
-    predictBtn.disabled = true;
-    loadingOverlay.style.display = 'flex';
-    errorMsg.style.display = 'none';
+    const form = document.getElementById('prediction-form');
+    const predictBtn = document.getElementById('predict-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const errorMsg = document.getElementById('error-msg');
+    const resultText = document.getElementById('result-text');
+    const resultPrice = document.getElementById('result-price');
 
-    const payload = {};
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const formData = new FormData(form);
+        predictBtn.disabled = true;
+        loadingOverlay.style.display = 'flex';
+        errorMsg.style.display = 'none';
 
-    formData.forEach((value, key) => {
-        if (value !== "") {
-            payload[key] = isNaN(value) ? value : Number(value);
+        const payload = {};
+        const formData = new FormData(form);
+
+        formData.forEach((value, key) => {
+            if (value !== "") {
+                payload[key] = isNaN(value) ? value : Number(value);
+            }
+        });
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.error) throw new Error(result.error);
+
+            resultText.textContent = 'Market Estimate';
+
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            });
+
+            resultPrice.textContent = formatter.format(result.predicted_price);
+
+        } catch (error) {
+            console.error(error);
+            errorMsg.style.display = 'block';
+            resultText.textContent = 'Error';
+            resultPrice.textContent = '$0.00';
+        } finally {
+            predictBtn.disabled = false;
+            loadingOverlay.style.display = 'none';
         }
     });
 
-    try {
-        const response = await fetch('/predict', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-
-        const result = await response.json();
-
-        if (result.error) {
-            throw new Error(result.error);
-        }
-
-        resultText.textContent = 'Market Estimate';
-
-        const formatter = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        });
-
-        resultPrice.textContent = formatter.format(result.predicted_price);
-
-    } catch (error) {
-        console.error(error);
-        errorMsg.style.display = 'block';
-        resultText.textContent = 'Error';
-        resultPrice.textContent = '$0.00';
-    } finally {
-        predictBtn.disabled = false;
-        loadingOverlay.style.display = 'none';
-    }
-});
+};
 </script>
 </body>
 </html>
