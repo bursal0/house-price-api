@@ -6,6 +6,9 @@ from preprocessor import CustomPreprocessor
 import joblib
 import pandas as pd
 import numpy as np
+import os
+
+templates = Jinja2Templates(directory=os.path.join(os.getcwd(), "templates"))
 
 app = FastAPI()
 
