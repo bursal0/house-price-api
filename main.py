@@ -20,23 +20,26 @@ try:
 except Exception as e:
     print("Model yüklenemedi:", e)
 
-# Ana sayfa
-@app.get("/", response_class=HTMLResponse)
+# Ana sayfa (GET + HEAD desteği)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Predict
+# Predict endpoint
 @app.post("/predict")
 def predict(data: dict):
     try:
         if model is None:
             return {"error": "Model yüklenmedi"}
 
+        if not data:
+            return {"error": "Boş veri gönderildi"}
+
         print("GELEN DATA:", data)
 
         df = pd.DataFrame([data])
 
-        # ❌ feature_names_in_ KULLANMA
+        # 🔥 Pipeline varsa direkt çalışır
         prediction = model.predict(df)
 
         price = np.expm1(prediction[0])
